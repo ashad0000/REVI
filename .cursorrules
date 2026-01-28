@@ -1,0 +1,163 @@
+# .cursorrules
+
+## 1. Project Context & Stack
+- Framework: Next.js 14+ (App Router)
+- Language: TypeScript (strict mode enabled)
+- Styling: Tailwind CSS
+- Backend/Auth/DB: Supabase (SSR-first patterns)
+- Deployment: Vercel (planned)
+
+---
+
+## 2. Architecture & Folder Structure
+- ALL application code lives in `web/src`
+- `web/src/app`:
+  - Routing, layouts, loading.tsx, error.tsx only
+  - NO business logic in route files
+- `web/src/components`:
+  - Reusable UI components only
+- `web/src/lib`:
+  - Business logic, utilities, Supabase clients, data access
+- `web/src/types`:
+  - Shared TypeScript types and interfaces
+- Do NOT create ad-hoc files outside this structure
+
+---
+
+## 3. Server vs Client Component Rules (Next.js)
+- Default to **Server Components**
+- Use `"use client"` only when required (state, effects, browser APIs)
+- Data fetching must happen server-side whenever possible
+- Client components must receive data via props, not fetch directly
+
+---
+
+## 4. Coding Standards (Recruiter-Ready)
+- Components:
+  - Functional components only
+  - `const ComponentName = () => {}` syntax
+- Typing:
+  - NO `any`
+  - Explicit interfaces for props, API responses, and Supabase data
+- Naming:
+  - PascalCase → components, types
+  - camelCase → functions, variables
+  - kebab-case → file names where appropriate
+- Exports:
+  - Prefer named exports
+  - One primary export per file
+  - Use barrel files (`index.ts`) intentionally
+
+---
+
+## 5. Error Handling & Logging
+- Never ignore errors
+- All async logic must use `try/catch`
+- Distinguish:
+  - User-facing error messages (clear, friendly)
+  - Developer logs (precise, actionable)
+- Never swallow errors silently
+
+---
+
+## 6. Supabase Rules
+- Use SSR-compatible clients only
+- Validate env vars before client initialization:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- NEVER expose service_role keys to the client
+- Auth logic must live in `web/src/lib/supabase`
+
+---
+
+## 7. Documentation & Comments
+- Comment **why**, not what
+- Use JSDoc for:
+  - All exported functions
+  - Hooks
+  - Complex utilities
+- Avoid redundant comments
+- README-level clarity should be achievable by reading the code alone
+
+---
+
+## 8. Performance & Accessibility
+- Use semantic HTML elements
+- Include `aria-*` attributes where applicable
+- Avoid unnecessary re-renders
+- Prefer server rendering over client hydration when possible
+- Use `loading.tsx` and `error.tsx` for UX consistency
+
+---
+
+## 9. Testing & Quality
+- Pure logic should be testable
+- No commented-out code
+- Code must pass ESLint + Prettier rules
+- Prefer clarity over cleverness
+
+---
+
+## 10. Context Death Prevention
+- If a file exceeds ~200 lines, suggest refactoring
+- If chat context grows large:
+  - Summarize current state before continuing
+- If requirements or assumptions are unclear:
+  - STOP and ask before implementing
+
+---
+
+## 11. Git & Collaboration
+- Use Conventional Commits:
+  - feat:
+  - fix:
+  - docs:
+  - chore:
+- Commits should explain *why*, not just what
+
+---
+
+## 12. Security Requirements (Non-Negotiable)
+
+- Zero Trust: Never trust client input for identity, role, ownership, authorization, or pricing. Always re-derive from server session and/or database.
+- Server-first: Prefer Server Components and server-side data fetching. Minimize `"use client"` usage and never use client-only authorization.
+- Authorization is Mandatory: Every read/write action must be authorized. Authorization checks must exist in server code AND data-layer controls (Supabase RLS).
+- Supabase RLS Required:
+  - RLS must be enabled on every table that contains user or app data.
+  - Every table must have explicit policies (no relying on defaults).
+  - Policies should use `auth.uid()` and ownership checks.
+  - Never assume the client will only request permitted rows.
+- Secret Safety:
+  - NEVER expose Supabase `service_role` key to the client.
+  - Client may only use `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+  - All privileged actions must occur server-side only.
+  - Never commit `.env*` files. Use `.env.example` for documentation.
+- Input Validation:
+  - Validate all API inputs with a schema (prefer Zod).
+  - Reject unknown/extra fields (strip or error explicitly).
+  - Validate IDs, pagination params, and sort fields (allowlist).
+- XSS / Content Safety:
+  - Never use `dangerouslySetInnerHTML`.
+  - Treat all user-generated content as untrusted; render as plain text by default.
+  - If HTML is required, sanitize with a proven sanitizer and document why.
+- CSRF / State Changes:
+  - If cookie-based sessions are used, ensure state-changing requests are protected against CSRF (same-site cookies, origin checks, CSRF tokens where appropriate).
+- Secure Headers:
+  - Use security headers where applicable (CSP, HSTS, X-Frame-Options/frame-ancestors, X-Content-Type-Options, Referrer-Policy, Permissions-Policy).
+  - Do not weaken CSP without documenting a reason.
+- Rate Limiting / Abuse:
+  - Rate limit authentication endpoints and any write-heavy endpoints.
+  - Add protections against brute force and spam (especially sign-in, sign-up, password reset).
+- Error Handling & Logging:
+  - Do not leak secrets, tokens, or internal stack traces to users.
+  - Logs must not contain sensitive data (tokens, passwords, full PII).
+  - Errors must be actionable for developers and safe for users.
+- Dependency Hygiene:
+  - Avoid adding unmaintained packages.
+  - Prefer minimal dependencies for security-sensitive features.
+- Security-by-Default Output:
+  - When generating code, choose the secure default even if it’s more verbose.
+  - If unsure whether something belongs on client or server, STOP and ask.
+- Context Death Guardrail:
+  - If the chat is long or requirements are unclear, summarize current security assumptions before implementing.
+  - If the requested change could introduce a vulnerability, explicitly call it out and propose a safer alternative.
