@@ -5,8 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
 export async function createTask(formData: FormData) {
-    const cookieStore = await cookies();
-    const supabase = createClient(cookieStore);
+    const supabase = createClient(cookies());
     const title = String(formData.get('title') ?? '').trim();
     const {
         data: { user },
@@ -44,8 +43,7 @@ export async function createTask(formData: FormData) {
 
 export async function markTaskDone(formData: FormData) {
     const taskId = String(formData.get('taskId') ?? '').trim();
-    const cookieStore = await cookies();
-    const supabase = createClient(cookieStore);
+    const supabase = createClient(cookies());
     const {
         data: { user },
         error: userError,
@@ -76,8 +74,7 @@ export async function markTaskDone(formData: FormData) {
 
 export async function deleteTask(formData: FormData) {
     const taskId = String(formData.get('taskId') ?? '').trim();
-    const cookieStore = await cookies();
-    const supabase = createClient(cookieStore);
+    const supabase = createClient(cookies());
     const {
         data: { user },
         error: userError,
