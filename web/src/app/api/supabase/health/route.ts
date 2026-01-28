@@ -4,7 +4,7 @@ export async function GET() {
 
     const hasUrl = Boolean(supabaseUrl);
     const hasAnonKey = Boolean(supabaseAnonKey);
-    const urlHost = hasUrl ? new URL(supabaseUrl).host : '';
+    const urlHost = supabaseUrl ? new URL(supabaseUrl).host : '';
 
     let fetchOk = false;
     let error: string | null = null;
