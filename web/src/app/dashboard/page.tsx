@@ -8,15 +8,13 @@ import NewTaskForm from '@/components/NewTaskForm';
 
 async function signOut() {
     'use server';
-    const cookieStore = await cookies();
-    const supabase = createClient(cookieStore);
+    const supabase = createClient(cookies());
     await supabase.auth.signOut();
     redirect('/login');
 }
 
 const DashboardPage = async () => {
-    const cookieStore = await cookies();
-    const supabase = createClient(cookieStore);
+    const supabase = createClient(cookies());
     const {
         data: { user },
     } = await supabase.auth.getUser();
