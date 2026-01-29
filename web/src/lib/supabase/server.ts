@@ -3,11 +3,11 @@ import { cookies } from 'next/headers';
 import type { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
 export const createClient = (
-    cookieStore: ReadonlyRequestCookies | Promise<ReadonlyRequestCookies>,
+    cookieStore?: ReadonlyRequestCookies | Promise<ReadonlyRequestCookies>,
 ) => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const store = cookieStore as ReadonlyRequestCookies;
+    const store = (cookieStore ?? cookies()) as ReadonlyRequestCookies;
 
     if (!supabaseUrl || !supabaseAnonKey) {
         throw new Error(
