@@ -13,6 +13,7 @@ export default function LoginPage() {
         setStatus('loading');
         setMessage('');
 
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://revi-jmn9.vercel.app';
         const connectionErrorMessage =
             'Supabase Connection Failed. Please check your Project URL, Anon Key, or Network connection.';
 
@@ -20,7 +21,7 @@ export default function LoginPage() {
             const { error } = await supabase.auth.signInWithOtp({
                 email,
                 options: {
-                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                    emailRedirectTo: `${siteUrl}/auth/callback`,
                 },
             });
 
