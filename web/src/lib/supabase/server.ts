@@ -1,39 +1,45 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import 'server-only';
+
+import { cookies as nextCookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
 import type { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
-export const createClient = (
-    cookieStore?: ReadonlyRequestCookies | Promise<ReadonlyRequestCookies>,
-) => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const store = (cookieStore ?? cookies()) as ReadonlyRequestCookies;
+type CookieInput = ReadonlyRequestCookies | Promise<ReadonlyRequestCookies>;
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error(
-            'Missing Supabase env vars. Check web/.env.local for NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.',
-        );
-    }
+async function resolveCookieStore(input?: CookieInput): Promise<ReadonlyRequestCookies> {
+  // If no input is provided (common in Route Handlers), we must call nextCookies()
+  // to get the real cookie store object.
+  if (!input) return nextCookies();
 
-    return createServerClient(supabaseUrl, supabaseAnonKey, {
-        cookies: {
-            get(name: string) {
-                return store.get(name)?.value;
-            },
-            set(name: string, value: string, options: CookieOptions) {
-                try {
-                    store.set({ name, value, ...options });
-                } catch {
-                    // Server Components can be read-only; ignore cookie write failures here.
-                }
-            },
-            remove(name: string, options: CookieOptions) {
-                try {
-                    store.set({ name, value: '', ...options, maxAge: 0 });
-                } catch {
-                    // Server Components can be read-only; ignore cookie write failures here.
-                }
-            },
+  // If input is a promise (older Next typings), await it.
+  const maybePromise = input as Promise<ReadonlyRequestCookies>;
+  if (typeof (maybePromise as any)?.then === 'function') return await maybePromise;
+
+  return input as ReadonlyRequestCookies;
+}
+
+export async function createClient(input?: CookieInput) {
+  const cookieStore = await resolveCookieStore(input);
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
         },
-    });
-};
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // setAll can be called from Server Components where setting cookies is not allowed
+            // (this is expected). Route Handlers will allow it.
+          }
+        },
+      },
+    }
+  );
+}
